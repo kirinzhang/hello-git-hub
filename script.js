@@ -15,10 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Game Board & State ---
     let board = createEmptyBoard();
     let score = 0;
+    let level = 0;
+    let linesCleared = 0;
     let isPlaying = false;
     let currentPiece;
     let nextPiece;
     let gameLoop;
+    const initialSpeed = 500;
+    const speedIncrement = 50;
 
     // Tetrominoes and their colors
     const PIECES = [
@@ -113,25 +117,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isPlaying) return;
 
         movePiece(0, 1); // Move down
-
-        if (checkCollision()) {
-            // Revert move and lock piece
-            currentPiece.y--;
-            lockPiece();
-            removeCompletedLines();
-            
-            // Spawn new piece
-            currentPiece = nextPiece;
-            nextPiece = createNewPiece();
-            drawNextPiece();
-
-            // Check for game over
-            if (checkCollision()) {
-                gameOver();
-            }
-        }
         
         draw();
+    }
+
+    async function lockAndResetPiece() {
+        lockPiece();
+        await removeCompletedLines(); // Now an async function
+        
+        currentPiece = nextPiece;
+        nextPiece = createNewPiece();
+        drawNextPiece();
+
+        // Check for game over
+        if (checkCollision()) {
+            gameOver();
+        }
     }
 
     function movePiece(dx, dy) {
@@ -140,6 +141,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (checkCollision()) {
             currentPiece.x -= dx;
             currentPiece.y -= dy;
+            // If the piece can't move down, it has landed
+            if (dy > 0) {
+                lockAndResetPiece();
+            }
         }
     }
 
@@ -196,25 +201,69 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function removeCompletedLines() {
-        let linesRemoved = 0;
-        outer: for (let y = ROWS - 1; y >= 0; y--) {
-            for (let x = 0; x < COLS; x++) {
-                if (board[y][x] === 0) {
-                    continue outer;
+        return new Promise(resolve => {
+            let linesToRemove = [];
+            for (let y = 0; y < ROWS; y++) {
+                if (board[y].every(value => value !== 0)) {
+                    linesToRemove.push(y);
                 }
             }
-            
-            // Line is full
-            const removedRow = board.splice(y, 1)[0].fill(0);
-            board.unshift(removedRow);
-            linesRemoved++;
-            y++; // Check the new line at this position
-        }
 
-        // Update score
-        if (linesRemoved > 0) {
-            score += linesRemoved * 100 * linesRemoved; // Bonus for multiple lines
-            scoreElement.textContent = score;
+            if (linesToRemove.length === 0) {
+                return resolve();
+            }
+
+            // --- Animation Step ---
+            clearInterval(gameLoop); // Pause game loop for animation
+            
+            let blinkCount = 0;
+            const blinkInterval = setInterval(() => {
+                blinkCount++;
+                linesToRemove.forEach(y => {
+                    for (let x = 0; x < COLS; x++) {
+                        // Toggle color for blinking effect
+                        const color = blinkCount % 2 === 1 ? '#ffffff' : (PIECES[board[y][x] - 1]?.color || '#333');
+                        context.fillStyle = color;
+                        context.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    }
+                });
+
+                if (blinkCount >= 3) { // Blink 3 times
+                    clearInterval(blinkInterval);
+                    
+                    // --- Actual Removal Step ---
+                    for (let i = linesToRemove.length - 1; i >= 0; i--) {
+                        const y = linesToRemove[i];
+                        board.splice(y, 1);
+                    }
+                    for (let i = 0; i < linesToRemove.length; i++) {
+                        board.unshift(Array(COLS).fill(0));
+                    }
+
+                    // --- Update Score & Level ---
+                    score += linesToRemove.length * 100 * linesToRemove.length;
+                    linesCleared += linesToRemove.length;
+                    
+                    const newLevel = Math.floor(linesCleared / 10);
+                    if (newLevel > level) {
+                        level = newLevel;
+                    }
+                    
+                    scoreElement.textContent = score;
+                    draw(); // Redraw board after removal
+                    
+                    updateSpeed(); // This will restart the gameLoop
+                    resolve();
+                }
+            }, 100);
+        });
+    }
+
+    function updateSpeed() {
+        const newSpeed = Math.max(100, initialSpeed - level * speedIncrement);
+        if (gameLoop) {
+            clearInterval(gameLoop);
+            gameLoop = setInterval(update, newSpeed);
         }
     }
 
@@ -222,6 +271,8 @@ document.addEventListener('DOMContentLoaded', () => {
         isPlaying = true;
         board = createEmptyBoard();
         score = 0;
+        level = 0;
+        linesCleared = 0;
         scoreElement.textContent = score;
         
         currentPiece = createNewPiece();
@@ -229,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawNextPiece();
 
         if (gameLoop) clearInterval(gameLoop);
-        gameLoop = setInterval(update, 500);
+        gameLoop = setInterval(update, initialSpeed);
 
         startButton.textContent = "重新开始";
         document.addEventListener('keydown', handleKeyPress);
@@ -238,14 +289,23 @@ document.addEventListener('DOMContentLoaded', () => {
     function gameOver() {
         isPlaying = false;
         clearInterval(gameLoop);
-        context.fillStyle = 'rgba(0, 0, 0, 0.75)';
-        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        // --- Game Over Animation ---
+        // Highlight the final piece that caused the game over
+        drawMatrix(currentPiece.shape, { x: currentPiece.x, y: currentPiece.y }, '#d32f2f'); // Highlight in red
         
-        context.font = '30px "Noto Sans SC"';
-        context.fillStyle = 'white';
-        context.textAlign = 'center';
-        context.fillText('游戏结束', canvas.width / 2, canvas.height / 2);
-        
+        setTimeout(() => {
+            // Dark overlay
+            context.fillStyle = 'rgba(0, 0, 0, 0.75)';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // "Game Over" text
+            context.font = '30px "Noto Sans SC"';
+            context.fillStyle = 'white';
+            context.textAlign = 'center';
+            context.fillText('游戏结束', canvas.width / 2, canvas.height / 2);
+        }, 300); // Short delay to show the highlighted piece
+
         startButton.textContent = "开始游戏";
         document.removeEventListener('keydown', handleKeyPress);
     }

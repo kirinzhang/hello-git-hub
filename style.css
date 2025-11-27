@@ -102,3 +102,45 @@ h2 {
 #start-button:active {
     transform: translateY(0);
 }
+
+.controls {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin-top: 1.5rem; /* Add some space from the button */
+}
+
+.controls h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.controls ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.controls li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.controls li span {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    font-weight: 700;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    margin-right: 0.75rem;
+    border: 1px solid #ced4da;
+    color: var(--text-color);
+}
