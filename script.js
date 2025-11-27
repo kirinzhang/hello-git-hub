@@ -15,24 +15,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Game Board & State ---
     let board = createEmptyBoard();
     let score = 0;
-    let level = 0;
-    let linesCleared = 0;
     let isPlaying = false;
     let currentPiece;
     let nextPiece;
     let gameLoop;
-    const initialSpeed = 500;
-    const speedIncrement = 50;
+    const gameSpeed = 500; // a fixed speed for now
 
-    // Tetrominoes and their colors
+    // Tetrominoes and their colors, updated for better aesthetics
     const PIECES = [
-        { shape: [[1, 1, 1, 1]], color: '#3498db' }, // I
-        { shape: [[1, 1, 0], [0, 1, 1]], color: '#e74c3c' }, // Z
-        { shape: [[0, 1, 1], [1, 1, 0]], color: '#2ecc71' }, // S
-        { shape: [[1, 1, 1], [0, 1, 0]], color: '#9b59b6' }, // T
-        { shape: [[1, 1], [1, 1]], color: '#f1c40f' }, // O
-        { shape: [[1, 0, 0], [1, 1, 1]], color: '#e67e22' }, // L
-        { shape: [[0, 0, 1], [1, 1, 1]], color: '#1abc9c' }  // J
+        { shape: [[1, 1, 1, 1]], color: '#f08080' }, // I (Light Coral)
+        { shape: [[1, 1, 0], [0, 1, 1]], color: '#f4a460' }, // Z (Sandy Brown)
+        { shape: [[0, 1, 1], [1, 1, 0]], color: '#98fb98' }, // S (Pale Green)
+        { shape: [[1, 1, 1], [0, 1, 0]], color: '#dda0dd' }, // T (Plum)
+        { shape: [[1, 1], [1, 1]], color: '#add8e6' }, // O (Light Blue)
+        { shape: [[1, 0, 0], [1, 1, 1]], color: '#fafad2' }, // L (Light Goldenrod Yellow)
+        { shape: [[0, 0, 1], [1, 1, 1]], color: '#d3d3d3' }  // J (Light Gray)
     ];
 
     // --- Core Functions ---
@@ -55,26 +52,46 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Drawing Functions ---
 
     function draw() {
-        // Clear board
+        // Clear board with the new background color from CSS
         context.clearRect(0, 0, canvas.width, canvas.height);
-        context.fillStyle = '#f8f9fa';
-        context.fillRect(0, 0, canvas.width, canvas.height);
-
+        
         // Draw placed pieces
-        drawMatrix(board, { x: 0, y: 0 });
+        drawBoard();
         // Draw current falling piece
-        drawMatrix(currentPiece.shape, { x: currentPiece.x, y: currentPiece.y }, currentPiece.color);
+        if (currentPiece) {
+            drawPiece(currentPiece);
+        }
     }
     
-    function drawMatrix(matrix, offset, color = null) {
-        matrix.forEach((row, y) => {
-            row.forEach((value, x) => {
+    function drawBlock(x, y, color) {
+        context.fillStyle = color;
+        context.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+
+        // Adding a subtle inner shadow and highlight for a "jelly" effect
+        context.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        context.fillRect(x * BLOCK_SIZE + 2, y * BLOCK_SIZE + 2, BLOCK_SIZE - 4, BLOCK_SIZE - 4);
+        
+        context.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        context.fillRect(x * BLOCK_SIZE + 4, y * BLOCK_SIZE + 4, BLOCK_SIZE - 8, BLOCK_SIZE - 8);
+    }
+    
+    function drawBoard() {
+        for (let y = 0; y < ROWS; y++) {
+            for (let x = 0; x < COLS; x++) {
+                if (board[y][x] !== 0) {
+                    const color = PIECES[board[y][x] - 1].color;
+                    drawBlock(x, y, color);
+                }
+            }
+        }
+    }
+
+    function drawPiece(piece) {
+        const { shape, color, x, y } = piece;
+        shape.forEach((row, r) => {
+            row.forEach((value, c) => {
                 if (value !== 0) {
-                    const blockColor = color || PIECES[value - 1]?.color || '#333';
-                    context.fillStyle = blockColor;
-                    context.fillRect((x + offset.x) * BLOCK_SIZE, (y + offset.y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-                    context.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-                    context.strokeRect((x + offset.x) * BLOCK_SIZE, (y + offset.y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    drawBlock(x + c, y + r, color);
                 }
             });
         });
@@ -82,9 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function drawNextPiece() {
         nextContext.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
-        const shape = nextPiece.shape;
-        const color = nextPiece.color;
         const blockSize = nextCanvas.width / NEXT_PIECE_CANVAS_SIZE;
+        const { shape, color } = nextPiece;
         
         const offsetX = (NEXT_PIECE_CANVAS_SIZE - shape[0].length) / 2;
         const offsetY = (NEXT_PIECE_CANVAS_SIZE - shape.length) / 2;
@@ -92,15 +108,9 @@ document.addEventListener('DOMContentLoaded', () => {
         shape.forEach((row, y) => {
             row.forEach((value, x) => {
                 if (value !== 0) {
+                    // Using a simplified draw for next piece
                     nextContext.fillStyle = color;
                     nextContext.fillRect(
-                        (x + offsetX) * blockSize, 
-                        (y + offsetY) * blockSize, 
-                        blockSize, 
-                        blockSize
-                    );
-                     nextContext.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-                    nextContext.strokeRect(
                         (x + offsetX) * blockSize, 
                         (y + offsetY) * blockSize, 
                         blockSize, 
@@ -115,71 +125,116 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function update() {
         if (!isPlaying) return;
-
         movePiece(0, 1); // Move down
-        
         draw();
     }
-
-    async function lockAndResetPiece() {
-        lockPiece();
-        await removeCompletedLines(); // Now an async function
+    
+    // NEW: The core mechanic!
+    async function onPieceLock() {
+        // 1. Decomposition: Convert piece to grid data
+        const { shape, x, y, color } = currentPiece;
+        const pieceIndex = PIECES.findIndex(p => p.color === color) + 1;
+        let affectedColumns = new Set();
         
+        shape.forEach((row, r) => {
+            row.forEach((value, c) => {
+                if (value !== 0) {
+                    if (y + r >= 0) { // Make sure we're not writing above the board
+                        board[y + r][x + c] = pieceIndex;
+                        affectedColumns.add(x + c);
+                    }
+                }
+            });
+        });
+
+        // 2. Individual Gravity Settle & Animation
+        await applyGravity(Array.from(affectedColumns));
+        
+        // 3. Line Clear Check (with global gravity)
+        await removeCompletedLines();
+        
+        // 4. Spawn new piece
         currentPiece = nextPiece;
         nextPiece = createNewPiece();
         drawNextPiece();
 
-        // Check for game over
-        if (checkCollision()) {
+        // 5. Check for game over
+        if (checkCollision(currentPiece)) {
             gameOver();
         }
     }
 
+    // NEW: Gravity algorithm
+    async function applyGravity(columns) {
+        let hasChanges = false;
+        for (const x of columns) {
+            let writePointer = ROWS - 1;
+            for (let readPointer = ROWS - 1; readPointer >= 0; readPointer--) {
+                if (board[readPointer][x] !== 0) {
+                    if (writePointer !== readPointer) {
+                        board[writePointer][x] = board[readPointer][x];
+                        board[readPointer][x] = 0;
+                        hasChanges = true;
+                    }
+                    writePointer--;
+                }
+            }
+        }
+        
+        // Visual feedback for settling
+        if (hasChanges) {
+            draw();
+            // a short pause to make the effect visible
+            await new Promise(res => setTimeout(res, 80)); 
+        }
+    }
+
     function movePiece(dx, dy) {
+        if (!isPlaying) return;
         currentPiece.x += dx;
         currentPiece.y += dy;
-        if (checkCollision()) {
+
+        if (checkCollision(currentPiece)) {
             currentPiece.x -= dx;
             currentPiece.y -= dy;
-            // If the piece can't move down, it has landed
-            if (dy > 0) {
-                lockAndResetPiece();
+            
+            if (dy > 0) { // Piece has landed
+                onPieceLock();
             }
         }
     }
 
     function rotatePiece() {
-        const shape = currentPiece.shape;
-        const newShape = shape[0].map((_, colIndex) => shape.map(row => row[colIndex]).reverse());
+        if (!isPlaying) return;
+        const originalShape = currentPiece.shape;
+        const newShape = originalShape[0].map((_, colIndex) => 
+            originalShape.map(row => row[colIndex]).reverse()
+        );
         
         const originalX = currentPiece.x;
         currentPiece.shape = newShape;
 
         // Wall kick logic
         let offset = 1;
-        while (checkCollision()) {
+        while (checkCollision(currentPiece)) {
             currentPiece.x += offset;
             offset = -(offset + (offset > 0 ? 1 : -1));
-            if (offset > newShape[0].length) {
-                // Rotation failed, revert
-                currentPiece.shape = shape;
+            if (offset > newShape[0].length + 1) { // Allow more flexible kicks
+                currentPiece.shape = originalShape;
                 currentPiece.x = originalX;
                 return;
             }
         }
     }
     
-    function checkCollision() {
-        const { shape, x, y } = currentPiece;
-        for (let row = 0; row < shape.length; row++) {
-            for (let col = 0; col < shape[row].length; col++) {
-                if (shape[row][col] !== 0) {
-                    const newX = x + col;
-                    const newY = y + row;
-                    if (
-                        newX < 0 || newX >= COLS || newY >= ROWS ||
-                        (board[newY] && board[newY][newX] !== 0)
-                    ) {
+    function checkCollision(piece) {
+        const { shape, x, y } = piece;
+        for (let r = 0; r < shape.length; r++) {
+            for (let c = 0; c < shape[r].length; c++) {
+                if (shape[r][c] !== 0) {
+                    const newX = x + c;
+                    const newY = y + r;
+                    if (newX < 0 || newX >= COLS || newY >= ROWS || (board[newY] && board[newY][newX] !== 0)) {
                         return true;
                     }
                 }
@@ -187,83 +242,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return false;
     }
+    
+    // UPDATED: Line removal with Global Gravity
+    async function removeCompletedLines() {
+        let linesToRemove = [];
+        for (let y = 0; y < ROWS; y++) {
+            if (board[y].every(value => value !== 0)) {
+                linesToRemove.push(y);
+            }
+        }
 
-    function lockPiece() {
-        const { shape, x, y, color } = currentPiece;
-        const pieceIndex = PIECES.findIndex(p => p.color === color) + 1;
-        shape.forEach((row, r) => {
-            row.forEach((value, c) => {
-                if (value !== 0) {
-                    board[y + r][x + c] = pieceIndex;
-                }
+        if (linesToRemove.length > 0) {
+            // Remove the lines
+            linesToRemove.forEach(y => {
+                board.splice(y, 1);
+                board.unshift(Array(COLS).fill(0));
             });
-        });
-    }
 
-    function removeCompletedLines() {
-        return new Promise(resolve => {
-            let linesToRemove = [];
-            for (let y = 0; y < ROWS; y++) {
-                if (board[y].every(value => value !== 0)) {
-                    linesToRemove.push(y);
-                }
-            }
+            // Update score
+            score += linesToRemove.length * 100 * linesToRemove.length;
+            scoreElement.textContent = score;
 
-            if (linesToRemove.length === 0) {
-                return resolve();
-            }
-
-            // --- Animation Step ---
-            clearInterval(gameLoop); // Pause game loop for animation
-            
-            let blinkCount = 0;
-            const blinkInterval = setInterval(() => {
-                blinkCount++;
-                linesToRemove.forEach(y => {
-                    for (let x = 0; x < COLS; x++) {
-                        // Toggle color for blinking effect
-                        const color = blinkCount % 2 === 1 ? '#ffffff' : (PIECES[board[y][x] - 1]?.color || '#333');
-                        context.fillStyle = color;
-                        context.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-                    }
-                });
-
-                if (blinkCount >= 3) { // Blink 3 times
-                    clearInterval(blinkInterval);
-                    
-                    // --- Actual Removal Step ---
-                    for (let i = linesToRemove.length - 1; i >= 0; i--) {
-                        const y = linesToRemove[i];
-                        board.splice(y, 1);
-                    }
-                    for (let i = 0; i < linesToRemove.length; i++) {
-                        board.unshift(Array(COLS).fill(0));
-                    }
-
-                    // --- Update Score & Level ---
-                    score += linesToRemove.length * 100 * linesToRemove.length;
-                    linesCleared += linesToRemove.length;
-                    
-                    const newLevel = Math.floor(linesCleared / 10);
-                    if (newLevel > level) {
-                        level = newLevel;
-                    }
-                    
-                    scoreElement.textContent = score;
-                    draw(); // Redraw board after removal
-                    
-                    updateSpeed(); // This will restart the gameLoop
-                    resolve();
-                }
-            }, 100);
-        });
-    }
-
-    function updateSpeed() {
-        const newSpeed = Math.max(100, initialSpeed - level * speedIncrement);
-        if (gameLoop) {
-            clearInterval(gameLoop);
-            gameLoop = setInterval(update, newSpeed);
+            // Apply GLOBAL gravity
+            const allColumns = Array.from({length: COLS}, (_, i) => i);
+            await applyGravity(allColumns);
         }
     }
 
@@ -271,8 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
         isPlaying = true;
         board = createEmptyBoard();
         score = 0;
-        level = 0;
-        linesCleared = 0;
         scoreElement.textContent = score;
         
         currentPiece = createNewPiece();
@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawNextPiece();
 
         if (gameLoop) clearInterval(gameLoop);
-        gameLoop = setInterval(update, initialSpeed);
+        gameLoop = setInterval(update, gameSpeed);
 
         startButton.textContent = "重新开始";
         document.addEventListener('keydown', handleKeyPress);
@@ -290,21 +290,13 @@ document.addEventListener('DOMContentLoaded', () => {
         isPlaying = false;
         clearInterval(gameLoop);
 
-        // --- Game Over Animation ---
-        // Highlight the final piece that caused the game over
-        drawMatrix(currentPiece.shape, { x: currentPiece.x, y: currentPiece.y }, '#d32f2f'); // Highlight in red
+        context.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        context.fillRect(0, 0, canvas.width, canvas.height);
         
-        setTimeout(() => {
-            // Dark overlay
-            context.fillStyle = 'rgba(0, 0, 0, 0.75)';
-            context.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // "Game Over" text
-            context.font = '30px "Noto Sans SC"';
-            context.fillStyle = 'white';
-            context.textAlign = 'center';
-            context.fillText('游戏结束', canvas.width / 2, canvas.height / 2);
-        }, 300); // Short delay to show the highlighted piece
+        context.font = 'bold 30px var(--font-family)';
+        context.fillStyle = 'white';
+        context.textAlign = 'center';
+        context.fillText('游戏结束', canvas.width / 2, canvas.height / 2);
 
         startButton.textContent = "开始游戏";
         document.removeEventListener('keydown', handleKeyPress);
@@ -324,10 +316,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case 'ArrowDown':
                 movePiece(0, 1);
-                // TODO: Add score for manual drop
+                score += 1; // Bonus for soft drop
+                scoreElement.textContent = score;
                 break;
             case 'ArrowUp':
                 rotatePiece();
+                break;
+            case ' ': // Space for hard drop (optional but good UX)
+                while(!checkCollision({...currentPiece, y: currentPiece.y + 1})) {
+                    currentPiece.y++;
+                    score += 2; // Bonus for hard drop
+                }
+                scoreElement.textContent = score;
+                onPieceLock();
                 break;
         }
         draw(); // Redraw immediately after input
@@ -335,7 +336,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     startButton.addEventListener('click', startGame);
     
-    // Initial draw to show an empty board
-    context.fillStyle = '#f8f9fa';
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    // Initial draw to show the canvas before starting
+    draw();
 });

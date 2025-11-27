@@ -1,121 +1,152 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
 :root {
-    --bg-color: #f0f2f5;
-    --container-bg: #ffffff;
-    --border-color: #e0e0e0;
-    --text-color: #333;
-    --accent-color: #007bff;
-    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --bg-gradient-start: #E0E5EC;
+    --bg-gradient-end: #FFFFFF;
+    --container-bg: #F0F2F5;
+    --border-color: #D1D9E6;
+    --text-color-primary: #3D3D3D;
+    --text-color-secondary: #5b6574;
+    --accent-color-primary: #6D5BBA;
+    --accent-color-secondary: #8271D8;
+    --shadow-light: rgba(255, 255, 255, 0.9);
+    --shadow-dark: rgba(217, 217, 240, 0.7);
+    --font-family: 'Poppins', 'Noto Sans SC', sans-serif;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
 }
 
 body {
-    font-family: 'Noto Sans SC', sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
+    font-family: var(--font-family);
+    background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+    color: var(--text-color-primary);
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .game-container {
     background-color: var(--container-bg);
-    padding: 2rem 3rem;
-    border-radius: 16px;
-    box-shadow: var(--shadow);
+    padding: 3rem 4rem;
+    border-radius: 24px;
+    box-shadow: 
+        -10px -10px 20px var(--shadow-light), 
+        10px 10px 20px var(--shadow-dark);
     text-align: center;
+    transition: all 0.3s ease;
 }
 
 h1 {
-    font-size: 2.5rem;
+    font-size: 2.8rem;
     font-weight: 700;
-    margin-bottom: 2rem;
-    color: var(--accent-color);
+    margin-bottom: 2.5rem;
+    color: var(--accent-color-primary);
+    letter-spacing: 1px;
 }
 
 h2 {
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text-color-secondary);
 }
 
 .game-board-container {
     display: flex;
-    gap: 2rem;
+    gap: 3rem;
     align-items: flex-start;
 }
 
 #tetris-canvas {
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-    background-color: #f8f9fa;
+    border: none;
+    border-radius: 12px;
+    background-color: #E6E9EF;
+    box-shadow: 
+        inset -5px -5px 10px var(--shadow-light), 
+        inset 5px 5px 10px var(--shadow-dark);
 }
 
 .game-info {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    width: 150px;
-    text-align: left;
+    gap: 2rem;
+    width: 180px;
+    text-align: center;
 }
 
-.game-info div {
-    background-color: #f8f9fa;
-    padding: 1rem;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
+.game-info .panel {
+    background-color: var(--container-bg);
+    padding: 1.25rem;
+    border-radius: 16px;
+    box-shadow: 
+        -6px -6px 12px var(--shadow-light), 
+        6px 6px 12px var(--shadow-dark);
 }
 
 #score {
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 700;
-    color: var(--accent-color);
+    color: var(--accent-color-primary);
     margin: 0;
+    line-height: 1;
 }
 
 #next-piece-canvas {
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: #fff;
+    border: none;
+    border-radius: 8px;
+    background-color: #E6E9EF;
+    box-shadow: 
+        inset -3px -3px 6px var(--shadow-light), 
+        inset 3px 3px 6px var(--shadow-dark);
+    margin: 0 auto;
 }
 
 #start-button {
-    font-family: 'Noto Sans SC', sans-serif;
-    background-color: var(--accent-color);
+    font-family: var(--font-family);
+    background: linear-gradient(145deg, var(--accent-color-secondary), var(--accent-color-primary));
     color: white;
     border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 700;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: all 0.25s ease-in-out;
+    box-shadow: 
+        -4px -4px 8px rgba(255, 255, 255, 0.7), 
+        4px 4px 8px rgba(0, 0, 0, 0.15);
+    letter-spacing: 0.5px;
 }
 
 #start-button:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    box-shadow: 
+        -6px -6px 12px rgba(255, 255, 255, 0.8), 
+        6px 6px 12px rgba(0, 0, 0, 0.2);
 }
 
 #start-button:active {
-    transform: translateY(0);
+    transform: translateY(1px);
+    box-shadow: 
+        -2px -2px 4px rgba(255, 255, 255, 0.7), 
+        2px 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .controls {
-    background-color: #f8f9fa;
-    padding: 1rem;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    margin-top: 1.5rem; /* Add some space from the button */
+    margin-top: 0; /* Let the gap handle spacing */
 }
 
 .controls h2 {
     margin-top: 0;
     margin-bottom: 1rem;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.75rem;
 }
 
 .controls ul {
@@ -127,20 +158,13 @@ h2 {
 
 .controls li {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-color-secondary);
 }
 
 .controls li span {
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    line-height: 24px;
-    text-align: center;
-    font-weight: 700;
-    background-color: #e9ecef;
-    border-radius: 4px;
-    margin-right: 0.75rem;
-    border: 1px solid #ced4da;
-    color: var(--text-color);
+    font-weight: 600;
+    color: var(--text-color-primary);
 }
