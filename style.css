@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap');
+
+:root {
+    --bg-color: #f0f2f5;
+    --container-bg: #ffffff;
+    --border-color: #e0e0e0;
+    --text-color: #333;
+    --accent-color: #007bff;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.game-container {
+    background-color: var(--container-bg);
+    padding: 2rem 3rem;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: var(--accent-color);
+}
+
+h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.game-board-container {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+#tetris-canvas {
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+.game-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 150px;
+    text-align: left;
+}
+
+.game-info div {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+#score {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    margin: 0;
+}
+
+#next-piece-canvas {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+#start-button {
+    font-family: 'Noto Sans SC', sans-serif;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#start-button:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+#start-button:active {
+    transform: translateY(0);
+}
