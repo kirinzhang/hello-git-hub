@@ -75,30 +75,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const front = document.createElement('div');
         front.className = 'card-face card-front';
 
-        // Portrait
+        // Portrait (Painting Style) - Now background layer bottom right
         const portrait = document.createElement('img');
-        portrait.src = 'assets/portrait.png';
+        portrait.src = 'assets/portrait_color.png';
         portrait.className = 'portrait-container';
 
-        // Content
+        // Main Content Container
+        const content = document.createElement('div');
+        content.className = 'card-front-content';
+
+        // Quote Text (Main Red)
         const text = document.createElement('p');
         text.className = 'quote-text';
         text.innerText = quote.content;
 
-        // Save Btn
-        const saveIcon = document.createElement('button');
-        saveIcon.className = 'absolute bottom-4 right-4 text-dark-beige hover:text-china-red transition-colors opacity-0'; // Initially hidden
-        saveIcon.style.transition = 'opacity 0.5s';
-        saveIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>`;
-        saveIcon.title = "保存卡片";
-        saveIcon.onclick = (e) => {
-            e.stopPropagation();
-            saveCardAsImage(front);
-        };
+        content.appendChild(text);
+
+        // Footer Section REMOVED as requested
+        // Save Btn REMOVED as requested
 
         front.appendChild(portrait);
-        front.appendChild(text);
-        front.appendChild(saveIcon);
+        front.appendChild(content); // Quote
+        // front.appendChild(footer);  
+        // front.appendChild(saveIcon);
 
         cardInner.appendChild(back);
         cardInner.appendChild(front);
